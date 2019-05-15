@@ -188,7 +188,7 @@ window's geometry."
            window-width)
         (message "Long lines detected. Consider turning on `visual-line-mode'")
         darkroom-margins-if-failed-guess)
-       ((> top-quartile-avg (* 0.9 fill-column))
+       ((> (* 0.9 fill-column) top-quartile-avg)
         ;; calculate margins so that `fill-column' + 1 colums are
         ;; centered on the window.
         ;; 
