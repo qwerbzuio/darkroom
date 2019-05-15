@@ -152,56 +152,59 @@ also used:
 For testing purposes, WINDOW can also be an integer number which
 is a width in columns, in which case it will be used instead of a
 window's geometry."
-  (if (or visual-line-mode
-          (and buffer-face-mode
-               (eq 'variable-pitch buffer-face-mode-face))
-          (= (point-min) (point-max)))
-      darkroom-margins-if-failed-guess
-    (let* ((window-width-info (if (integerp window)
-                                  window
-                                (darkroom--window-width window)))
-           (window-width (car window-width-info))
-           (scaled-char-width (cdr window-width-info))
-           (top-quartile-avg
-            (or darkroom--guess-margins-statistics-cache
-                (set
-                 (make-local-variable 'darkroom--guess-margins-statistics-cache)
-                 (let* ((line-widths
-                         (save-excursion
-                           (goto-char (point-min))
-                           (cl-loop for start = (point)
-                                    while (search-forward "\n"
-                                                          20000
-                                                          'no-error)
-                                    for width = (truncate
-                                                 (car
-                                                  (window-text-pixel-size
-                                                   window
-                                                   start (1- (point))))
-                                                 scaled-char-width)
-                                    unless (zerop width)
-                                    collect width)))
-                        (n4 (max 1 (/ (length line-widths) 4))))
-                   (/ (apply '+ (cl-subseq (sort line-widths '>) 0 n4)) n4))))))
-      (cond
-       ((> top-quartile-avg
-           window-width)
-        (message "Long lines detected. Consider turning on `visual-line-mode'")
-        darkroom-margins-if-failed-guess)
-       ((> (* 0.9 fill-column) top-quartile-avg)
-        ;; calculate margins so that `fill-column' + 1 colums are
-        ;; centered on the window.
-        ;; 
-        (let ((margin (truncate (* (- window-width (1+ fill-column))
-                                   (/ (float scaled-char-width)
-                                      (frame-char-width)))
-                                2)))
-          (if darkroom-verbose
-              (message "Choosing %s-wide margins based on fill-column %s"
-                       margin fill-column))
-          (cons margin margin)))
-       (t
-        darkroom-margins-if-failed-guess)))))
+  (save-excursion
+    (save-restriction
+      (widen)
+      (if (or visual-line-mode
+              (and buffer-face-mode
+                   (eq 'variable-pitch buffer-face-mode-face))
+              (= (point-min) (point-max)))
+          darkroom-margins-if-failed-guess
+        (let* ((window-width-info (if (integerp window)
+                                      window
+                                    (darkroom--window-width window)))
+               (window-width (car window-width-info))
+               (scaled-char-width (cdr window-width-info))
+               (top-quartile-avg
+                (or darkroom--guess-margins-statistics-cache
+                    (set
+                     (make-local-variable 'darkroom--guess-margins-statistics-cache)
+                     (let* ((line-widths
+                             (save-excursion
+                               (goto-char (point-min))
+                               (cl-loop for start = (point)
+                                        while (search-forward "\n"
+                                                              20000
+                                                              'no-error)
+                                        for width = (truncate
+                                                     (car
+                                                      (window-text-pixel-size
+                                                       window
+                                                       start (1- (point))))
+                                                     scaled-char-width)
+                                        unless (zerop width)
+                                        collect width)))
+                            (n4 (max 1 (/ (length line-widths) 4))))
+                       (/ (apply '+ (cl-subseq (sort line-widths '>) 0 n4)) n4))))))
+          (cond
+           ((> top-quartile-avg
+               window-width)
+            (message "Long lines detected. Consider turning on `visual-line-mode'")
+            darkroom-margins-if-failed-guess)
+           ((> (* 0.9 fill-column) top-quartile-avg)
+            ;; calculate margins so that `fill-column' + 1 colums are
+            ;; centered on the window.
+            ;; 
+            (let ((margin (truncate (* (- window-width (1+ fill-column))
+                                       (/ (float scaled-char-width)
+                                          (frame-char-width)))
+                                    2)))
+              (if darkroom-verbose
+                  (message "Choosing %s-wide margins based on fill-column %s"
+                           margin fill-column))
+              (cons margin margin)))
+           (t
+            darkroom-margins-if-failed-guess)))))))
 
 (defun darkroom--compute-margins (window)
   "From `darkroom-margins', computes desired margins for WINDOW."
