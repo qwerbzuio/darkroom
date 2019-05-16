@@ -107,6 +107,11 @@ symmetical margins."
   :type 'boolean
   :group 'darkroom)
 
+(defcustom darkroom-disabled-modes '()
+  "List of modes to be disabled in darkroom mode."
+  :type 'list
+  :group 'darkroom)
+
 (defvar darkroom--guess-margins-statistics-cache nil
   "Cache used by `darkroom-guess-margins'.")
 
@@ -291,7 +296,7 @@ With optional JUST-MARGINS, just set the margins."
     (setq darkroom--saved-state
           (mapcar #'(lambda (sym)
                       (cons sym (buffer-local-value sym (current-buffer))))
-                  darkroom--saved-variables))
+                  (append darkroom--saved-variables darkroom-disabled-modes)))
     (setq mode-line-format nil
           header-line-format nil
           fringes-outside-margins darkroom-fringes-outside-margins)
