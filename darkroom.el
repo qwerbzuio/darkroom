@@ -304,7 +304,7 @@ With optional JUST-MARGINS, just set the margins."
 (defun darkroom--leave ()
   "Undo the effects of `darkroom--enter'."
   (mapc #'(lambda (pair)
-            (set (make-local-variable (car pair)) (cdr pair)))
+            (set (car pair) (cdr pair)))
         darkroom--saved-state)
   (setq darkroom--saved-state nil)
   (text-scale-mode -1)
